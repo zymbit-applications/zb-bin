@@ -183,7 +183,7 @@ impl PiModule {
             )?;
 
             if model.contains("Rasbperry Pi 5") {
-                bail!("Rasberry Pi 4 version of zb installed, but Rasberry Pi 4 is not detected. Ensure you have the correct zb version installed");
+                bail!("Raspberry Pi 4 version of zb installed, but Rasberry Pi 4 is not detected. Ensure you have the correct zb version installed");
             }
 
             // Need explicit return when rpi4 and rpi5 are both set for installer
@@ -199,7 +199,7 @@ impl PiModule {
             )?;
 
             if !model.contains("Rasbperry Pi 5") {
-                bail!("Rasberry Pi 5 version of zb installed, but Rasberry Pi 5 is not detected. Ensure you have the correct zb version installed");
+                bail!("Raspberry Pi 5 version of zb installed, but Rasberry Pi 5 is not detected. Ensure you have the correct zb version installed");
             }
 
             Ok(PiModule::Rpi5_64)
