@@ -182,7 +182,7 @@ impl PiModule {
                 Path::new("/proc").join("device-tree").join("model"),
             )?;
 
-            if model.contains("Rasbperry Pi 5") {
+            if model.contains("Raspberry Pi 5") {
                 bail!("Raspberry Pi 4 version of zb installed, but Rasberry Pi 4 is not detected. Ensure you have the correct zb version installed");
             }
 
@@ -198,7 +198,7 @@ impl PiModule {
                 Path::new("/proc").join("device-tree").join("model"),
             )?;
 
-            if !model.contains("Rasbperry Pi 5") {
+            if !model.contains("Raspberry Pi 5") {
                 bail!("Raspberry Pi 5 version of zb installed, but Rasberry Pi 5 is not detected. Ensure you have the correct zb version installed");
             }
 
