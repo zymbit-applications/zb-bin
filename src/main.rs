@@ -88,7 +88,7 @@ async fn start() -> Result<()> {
         }
     };
 
-    toolchain::install::prompt("zbcli", &target_asset.to_string(), &cli_args.zb_version).await?;
+    toolchain::install::prompt("zbcli", &target_asset.to_string(), cli_args.zb_version.as_ref()).await?;
 
     println!(
         "Installed zbcli. Run 'zbcli install' to install Bootware onto \

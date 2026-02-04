@@ -5,13 +5,10 @@ use urlencoding::encode;
 /// `tag_prefix`: "zbcli" in "zbcli-1.1.0"
 pub async fn list(
     tag_prefix: &str,
-    zb_version: &Option<String>,
+    zb_version: Option<&String>,
     n_items: u8,
 ) -> Result<Vec<Release>> {
     let github_instance = octocrab::instance();
-    #[cfg(feature = "zbcli-devel")]
-    let repo = github_instance.repos("zymbit-applications", "zb-bin-devel");
-    #[cfg(not(feature = "zbcli-devel"))]
     let repo = github_instance.repos("zymbit-applications", "zb-bin");
 
     let releases = repo.releases();
@@ -42,9 +39,8 @@ pub async fn list(
                     .page(page)
                     .send()
                     .await
-                    .map(|page|
-                        page.into_iter()
-                    ).or_else(|e|
+                    .map(IntoIterator::into_iter)
+                    .or_else(|e|
                         // don't bail if we get no results back unless we haven't accumulated any
                         // from previous pages
                         if accumulate.is_empty() {

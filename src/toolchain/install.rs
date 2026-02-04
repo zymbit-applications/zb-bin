@@ -17,7 +17,7 @@ use super::version;
 pub async fn prompt(
     tag_prefix: &str,
     target_asset: &str,
-    zb_version: &Option<String>,
+    zb_version: Option<&String>,
 ) -> Result<()> {
     let releases = version::list(tag_prefix, zb_version, 10_u8).await?;
 
@@ -30,10 +30,10 @@ pub async fn prompt(
                 .any(|asset| target_asset == asset.name)
         })
         .collect::<Vec<_>>();
-    if releases_list.is_empty() && zb_version.is_some() {
+    if releases_list.is_empty() && let Some(zb_ver) = zb_version {
         bail!(
             "asset '{target_asset}' does not exist within the '{}' release",
-            zb_version.as_ref().unwrap()
+            zb_ver
         )
     }
 
@@ -42,17 +42,16 @@ pub async fn prompt(
         .map(|release| &release.tag_name)
         .collect::<Vec<_>>();
 
-    let target_release = match zb_version {
-        Some(_) => releases_list[0],
-        None => {
-            let selection = dialoguer::FuzzySelect::with_theme(&ColorfulTheme::default())
-                .with_prompt("Select version")
-                .items(&releases_strings)
-                .interact()
-                .context("Failed to get version selection")?;
+    let target_release = if zb_version.is_some() {
+        releases_list[0]
+    } else {
+        let selection = dialoguer::FuzzySelect::with_theme(&ColorfulTheme::default())
+            .with_prompt("Select version")
+            .items(&releases_strings)
+            .interact()
+            .context("Failed to get version selection")?;
 
-            releases_list[selection]
-        }
+        releases_list[selection]
     };
 
     let Some(asset) = target_release
