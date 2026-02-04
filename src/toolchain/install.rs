@@ -36,11 +36,31 @@ pub async fn prompt_version(
         .map(|release| &release.tag_name)
         .collect::<Vec<_>>();
 
-    let selection = dialoguer::FuzzySelect::with_theme(&ColorfulTheme::default())
-        .with_prompt("Select version")
-        .items(&releases_strings)
-        .interact()
-        .context("Failed to get version selection")?;
+    let selection = loop {
+        let selection = dialoguer::FuzzySelect::with_theme(&ColorfulTheme::default())
+            .with_prompt("Select version")
+            .items(&releases_strings)
+            .interact()
+            .context("Failed to get version selection")?;
+
+        if releases_list[selection].tag_name.contains("BETA") {
+            println!(
+                "You have selected a beta version of bootware 2.0, which includes preliminary \
+                support for Raspberry Pi native secure boot. This is not yet intended for use \
+                in production environments and has limited platform support from the full release \
+                (see compatibility list at https://docs.zymbit.com/bootware/2.0.0)."
+            );
+            if !dialoguer::Confirm::with_theme(&ColorfulTheme::default())
+                .with_prompt("Are you sure you want to continue?")
+                .default(true)
+                .interact()
+                .context("Failed to get confirmation")?
+            {
+                continue;
+            }
+        }
+        break selection;
+    };
 
     let mut releases_list = releases_list;
     Ok(releases_list.remove(selection).tag_name)
@@ -64,7 +84,7 @@ pub async fn install(target_release: Release, asset_type: ZbcliAsset) -> Result<
     let asset_res = reqwest::get(asset.browser_download_url.clone()).await?;
     let mut content = std::io::Cursor::new(asset_res.bytes().await?);
 
-    println!("Installing zbcli");
+    println!("Installing zbcli...");
 
     let zb_path = Path::new("/usr/bin/zbcli");
 

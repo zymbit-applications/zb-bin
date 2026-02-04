@@ -1,7 +1,7 @@
 # zb-bin
 
 
-## Installing Zymbit tools
+## Installing Zymbit Bootware tools
 ```
 curl -sSf https://raw.githubusercontent.com/zymbit-applications/zb-bin/main/install.sh | sudo bash
 ```
@@ -13,6 +13,7 @@ curl -sSf https://raw.githubusercontent.com/zymbit-applications/zb-bin/main/inst
 ```
 ./zb-install [--with-hardware-signing | --with-software-signing] [--zb-version <latest|VERSION_TAG>] [--rpi-model <MODELSPEC>]
 ```
+- Note: specifying `--zb-version latest` will download and install the latest non-beta version of `zbcli`.
 
 **OR**
 

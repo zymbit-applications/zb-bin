@@ -51,17 +51,14 @@ async fn start() -> Result<()> {
 
     let should_use_hardware = match cli_args.use_hw {
         Some(flag) => flag,
-        None => dialoguer::Select::with_theme(&ColorfulTheme::default())
+        None => dialoguer::Confirm::with_theme(&ColorfulTheme::default())
             .with_prompt(
                 "'zbcli' comes with software signing by default. Include hardware key signing? \
                     (Requires SCM or HSM6)",
             )
-            .item("Yes")
-            .item("No")
-            .default(1)
+            .default(false)
             .interact()
             .context("Failed to get signing option")?
-            == 0,
     };
 
     let target_asset = match system.pi_module {
@@ -97,10 +94,18 @@ async fn start() -> Result<()> {
     let rel = toolchain::version::get_release(&zb_version).await?;
     toolchain::install::install(rel, target_asset).await?;
 
-    println!(
-        "Installed zbcli. Run 'zbcli install' to install Bootware onto \
-    your system or visit the online documentation at https://docs.zymbit.com/bootware/."
-    );
+    if zb_version.contains("BETA") {
+        println!(
+            "Done. Please refer to the online documentation for Bootware 2.0 at \
+            https://docs.zymbit.com/bootware/2.0.0 for limitations & instructions on \
+            setting up secure boot. Thank you for testing the beta version of Bootware 2.0!"
+        );
+    } else {
+         println!(
+            "Done. Run 'zbcli install' to install Bootware onto \
+            your system or visit the online documentation at https://docs.zymbit.com/bootware/."
+        );
+    }
 
     Ok(())
 }
