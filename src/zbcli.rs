@@ -1,4 +1,4 @@
-#[derive(derive_more::Display, PartialEq)]
+#[derive(Clone, Copy, derive_more::Display, PartialEq)]
 pub enum ZbcliAsset {
     #[display(fmt = "zbcli-rpizero2w")]
     Rpi0,

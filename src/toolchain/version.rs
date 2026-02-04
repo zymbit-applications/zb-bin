@@ -5,7 +5,6 @@ use urlencoding::encode;
 /// `tag_prefix`: "zbcli" in "zbcli-1.1.0"
 pub async fn list(
     tag_prefix: &str,
-    zb_version: Option<&String>,
     n_items: u8,
 ) -> Result<Vec<Release>> {
     let github_instance = octocrab::instance();
@@ -13,21 +12,7 @@ pub async fn list(
 
     let releases = repo.releases();
 
-    let release_list = if let Some(version) = zb_version {
-        let release = if version.to_lowercase().eq("latest") {
-            releases
-                .get_latest()
-                .await
-                .context("Failed to get latest release")?
-        } else {
-            let version_tag = encode(version).into_owned();
-            releases
-                .get_by_tag(version_tag.as_str())
-                .await
-                .context(format!("Failed to get release tagged with '{version}'.\n"))?
-        };
-        std::iter::once(release).collect()
-    } else {
+    let release_list = {
         let mut count = 0usize;
         let mut page = 1u32;
         let mut accumulate = Vec::new();
@@ -63,4 +48,25 @@ pub async fn list(
     };
 
     Ok(release_list)
+}
+
+pub async fn get_release(version: &str) -> Result<Release> {
+    let github_instance = octocrab::instance();
+    let repo = github_instance.repos("zymbit-applications", "zb-bin");
+    let releases = repo.releases();
+
+    let release = if version.to_lowercase().eq("latest") {
+        releases
+            .get_latest()
+            .await
+            .context("Failed to get latest release")?
+    } else {
+        let version_tag = encode(version).into_owned();
+        releases
+            .get_by_tag(version_tag.as_str())
+            .await
+            .context(format!("Failed to get release tagged with '{version}'.\n"))?
+    };
+
+    Ok(release)
 }

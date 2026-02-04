@@ -2,39 +2,33 @@ use std::{fs::File, path::Path};
 
 use anyhow::{bail, Context, Result};
 use dialoguer::theme::ColorfulTheme;
-use reqwest;
+use octocrab::models::repos::Release;
 
 use crate::{
     system,
     terminal::{formatted_left_output, OutputColor},
+    toolchain::version,
+    zbcli::ZbcliAsset,
 };
 
-use super::version;
-
-/// Prompts user for version and installs tool to `/usr/bin/{tag_prefix}`
-///
-/// `tag_prefix`: `zbcli` in `zbcli-1.1.0`
-pub async fn prompt(
+pub async fn prompt_version(
     tag_prefix: &str,
-    target_asset: &str,
-    zb_version: Option<&String>,
-) -> Result<()> {
-    let releases = version::list(tag_prefix, zb_version, 10_u8).await?;
+    target_asset: ZbcliAsset,
+) -> Result<String> {
+    let releases = version::list(tag_prefix, 10_u8).await?;
 
+    let asset_name = target_asset.to_string();
     let releases_list = releases
-        .iter()
+        .into_iter()
         .filter(|release| {
             release
                 .assets
                 .iter()
-                .any(|asset| target_asset == asset.name)
+                .any(|asset| asset_name == asset.name)
         })
         .collect::<Vec<_>>();
-    if releases_list.is_empty() && let Some(zb_ver) = zb_version {
-        bail!(
-            "asset '{target_asset}' does not exist within the '{}' release",
-            zb_ver
-        )
+    if releases_list.is_empty() {
+        bail!("no matching releases found")
     }
 
     let releases_strings = releases_list
@@ -42,39 +36,41 @@ pub async fn prompt(
         .map(|release| &release.tag_name)
         .collect::<Vec<_>>();
 
-    let target_release = if zb_version.is_some() {
-        releases_list[0]
-    } else {
-        let selection = dialoguer::FuzzySelect::with_theme(&ColorfulTheme::default())
-            .with_prompt("Select version")
-            .items(&releases_strings)
-            .interact()
-            .context("Failed to get version selection")?;
+    let selection = dialoguer::FuzzySelect::with_theme(&ColorfulTheme::default())
+        .with_prompt("Select version")
+        .items(&releases_strings)
+        .interact()
+        .context("Failed to get version selection")?;
 
-        releases_list[selection]
-    };
+    let mut releases_list = releases_list;
+    Ok(releases_list.remove(selection).tag_name)
+}
 
+pub async fn install(target_release: Release, asset_type: ZbcliAsset) -> Result<()> {
+    let asset_name = asset_type.to_string();
     let Some(asset) = target_release
         .assets
         .iter()
-        .find(|asset| *target_asset == asset.name)
+        .find(|asset| asset_name == asset.name)
     else {
         bail!(
-            "{} failed to find '{target_asset}' from latest release",
-            formatted_left_output("Error", &OutputColor::Red)
+            "{} failed to find '{}' in release '{}'",
+            formatted_left_output("Error", &OutputColor::Red),
+            asset_name,
+            target_release.tag_name,
         )
     };
 
     let asset_res = reqwest::get(asset.browser_download_url.clone()).await?;
     let mut content = std::io::Cursor::new(asset_res.bytes().await?);
 
-    println!("Installing {tag_prefix}");
+    println!("Installing zbcli");
 
-    let zb_path = Path::new("/usr").join("bin").join(tag_prefix);
+    let zb_path = Path::new("/usr/bin/zbcli");
 
-    let mut zb_file = File::create(&zb_path)?;
+    let mut zb_file = File::create(zb_path)?;
     std::io::copy(&mut content, &mut zb_file)?;
-    system::add_executable_permission(&zb_path)?;
+    system::add_executable_permission(zb_path)?;
 
     Ok(())
 }

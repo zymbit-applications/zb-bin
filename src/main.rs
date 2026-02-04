@@ -88,11 +88,18 @@ async fn start() -> Result<()> {
         }
     };
 
-    toolchain::install::prompt("zbcli", &target_asset.to_string(), cli_args.zb_version.as_ref()).await?;
+    let zb_version = if let Some(ver) = cli_args.zb_version {
+        ver
+    } else {
+        toolchain::install::prompt_version("zbcli", target_asset).await?
+    };
+
+    let rel = toolchain::version::get_release(&zb_version).await?;
+    toolchain::install::install(rel, target_asset).await?;
 
     println!(
         "Installed zbcli. Run 'zbcli install' to install Bootware onto \
-    your system or 'zbcli --help' for more options."
+    your system or visit the online documentation at https://docs.zymbit.com/bootware/."
     );
 
     Ok(())

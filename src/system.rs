@@ -31,7 +31,10 @@ use std::fmt::Display;
 use std::{
     fs::{self},
     os::unix::fs::PermissionsExt,
-    path::PathBuf,
+    path::{
+        Path,
+        PathBuf,
+    },
 };
 
 static ROOTDEV_NAME: &str = "mmcblk0";
@@ -218,7 +221,7 @@ impl DiskLayout {
 }
 
 /// Equivalent to `chmod a+x`
-pub fn add_executable_permission(file: &PathBuf) -> Result<()> {
+pub fn add_executable_permission(file: &Path) -> Result<()> {
     let metadata =
         fs::metadata(file).context(format!("Failed to get metadata ({})", file.display()))?;
     let mut permissions = metadata.permissions();
@@ -248,7 +251,7 @@ fn boot_mountpoint() -> Result<PathBuf> {
                 .nth(1)
                 .unwrap_or_else(|| panic!("unable to parse system mount table"))
         })
-        .nth(0)
+        .next()
         .unwrap_or_else(|| panic!("{} not mounted!", ROOTDEV_NAME));
 
     Ok(PathBuf::from(mountpoint))
