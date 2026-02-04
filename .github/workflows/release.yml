@@ -7,7 +7,7 @@ on:
 
 jobs:
   build_installer:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
 
     steps:
     - name: Checkout code
@@ -16,15 +16,14 @@ jobs:
     - name: Build
       uses: actions-rs/cargo@v1
       with:
-        use-cross: true
         command: build
-        args: --release --target aarch64-unknown-linux-gnu
+        args: --release
 
     - name: Upload
       uses: actions/upload-artifact@v4
       with:
         name: installer
-        path: target/aarch64-unknown-linux-gnu/release/zb-installer
+        path: target/release/zb-installer
 
   release:
     needs: [build_installer]
